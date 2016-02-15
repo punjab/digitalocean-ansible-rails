@@ -9,7 +9,6 @@ It should allow you to have a development environment that is identical to your 
 
 + Rails
 + Nginx
-+ Unicorn
 + Rbenv
 + Node.js
 + Postgres or MySQL
@@ -55,32 +54,32 @@ Nginx config
 upstream unicorn {
   server unix:/var/www/sitename/current/tmp/sockets/unicorn.sock fail_timeout=0;
 }
- 
+
 server {
   listen 80 default deferred;
   root /var/www/sitename/current/public;
-  
+
   try_files $uri/maintenance.html $uri/index.html $uri @unicorn;
-  
+
   location @unicorn {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header Host $http_host;
     proxy_redirect off;
     proxy_pass http://unicorn;
   }
- 
-  location ~ ^/(assets)/  {  
+
+  location ~ ^/(assets)/  {
     root /var/www/sitename/current/public;
     gzip_static on;
     expires     max;
     add_header  Cache-Control public;
   }
-  	
+
   location = /favicon.ico {
     expires    max;
     add_header Cache-Control public;
   }
-  
+
   error_page 500 502 503 504 /500.html;
   client_max_body_size 4G;
   keepalive_timeout 10;
@@ -91,24 +90,24 @@ Unicorn.rb (config/unicorn.rb)
 
 ```ruby
 # SET YOUR HOME DIR HERE
- 
+
 APP_ROOT = File.expand_path(File.dirname(File.dirname(__FILE__)))
- 
+
 worker_processes 2
 working_directory APP_ROOT
 preload_app true
 timeout 30
 rails_env = ENV['RAILS_ENV'] || 'production'
- 
+
 listen APP_ROOT + "/tmp/sockets/unicorn.sock", :backlog => 64
 pid APP_ROOT + "/tmp/pids/unicorn.pid"
- 
+
 stderr_path APP_ROOT + "/log/unicorn.stderr.log"
 stdout_path APP_ROOT + "/log/unicorn.stdout.log"
- 
+
 before_fork do |server, worker|
   ActiveRecord::Base.connection.disconnect!
-  
+
   old_pid = APP_ROOT + '/tmp/pids/unicorn.pid.oldbin'
   if File.exists?(old_pid) && server.pid != old_pid
     begin
@@ -118,7 +117,7 @@ before_fork do |server, worker|
     end
   end
 end
- 
+
 after_fork do |server, worker|
   ActiveRecord::Base.establish_connection
 end
